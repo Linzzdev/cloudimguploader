@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload e Exibição de Imagem</title>
+</head>
+<body>
+  <h1>Upload e Exibição de Imagem</h1>
+  
+  <div id="imageContainer"></div>
+  
+  <input type="file" id="imageInput" accept="image/*" />
+  <button id="uploadBtn" style="display: block; margin: 20px;">Upload Imagem</button>
+  <button id="fetchImagesBtn" style="display: block; margin: 20px;">Buscar Imagens do Cloudinary</button>
+  
+
+  <script>
+    const cloudName = ''';
+    const unsignedUploadPreset = ''';
+    const uploadedImages = [];
+
+    document.getElementById('uploadBtn').addEventListener('click', () => {
+      const fileInput = document.getElementById('imageInput');
+      const file = fileInput.files[0];
+
+      if (file) {
+        uploadImageToCloudinary(file);
+      } else {
+        alert("Por favor, selecione uma imagem primeiro.");
+      }
+    });
+
+    function uploadImageToCloudinary(file) {
+      const url = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', unsignedUploadPreset);
+
+      fetch(url, {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log('URL da imagem:', data.secure_url);
+        insertImageInDiv(data.secure_url);
+        uploadedImages.push(data.secure_url); 
+      })
+      .catch(err => console.error('Erro ao fazer o upload da imagem:', err));
+    }
+
+    function insertImageInDiv(imageUrl) {
+      const imageContainer = document.getElementById('imageContainer');
+      const img = document.createElement('img');
+      img.src = imageUrl;
+      img.alt = 'Imagem Carregada';
+      img.style.maxWidth = '300px';
+      imageContainer.appendChild(img);
+    }
+
+    document.getElementById('fetchImagesBtn').addEventListener('click', async () => {
+      try {
+        const response = await fetch('http://localhost:3000/images'); 
+        const data = await response.json();
+        console.log(data.resources); 
+
+        data.resources.forEach(resource => {
+          insertImageInDiv(resource.secure_url);
+        });
+      } catch (error) {
+        console.error('Erro ao buscar imagens:', error);
+      }
+    });
+  </script>
+</body>
+</html>
